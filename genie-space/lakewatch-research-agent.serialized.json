@@ -1,0 +1,358 @@
+{
+  "version": 2,
+  "data_sources": {
+    "tables": [
+      {
+        "identifier": "lakewatch.bronze.aws_cloudtrail"
+      },
+      {
+        "identifier": "lakewatch.bronze.c2intelfeeds"
+      },
+      {
+        "identifier": "lakewatch.bronze.c2intelfeeds_configs"
+      },
+      {
+        "identifier": "lakewatch.bronze.code_security_exploits"
+      },
+      {
+        "identifier": "lakewatch.bronze.code_security_findings"
+      },
+      {
+        "identifier": "lakewatch.bronze.crowdstrike_events"
+      },
+      {
+        "identifier": "lakewatch.bronze.exchange_message_tracking"
+      },
+      {
+        "identifier": "lakewatch.bronze.feedly"
+      },
+      {
+        "identifier": "lakewatch.bronze.github_audit"
+      },
+      {
+        "identifier": "lakewatch.bronze.linux_syslog"
+      },
+      {
+        "identifier": "lakewatch.bronze.microsoft_winevtlog",
+        "column_configs": [
+          {
+            "column_name": "_meta"
+          },
+          {
+            "column_name": "data",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "lw_id",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "time",
+            "enable_format_assistance": true
+          }
+        ]
+      },
+      {
+        "identifier": "lakewatch.bronze.slack_access_logs"
+      },
+      {
+        "identifier": "lakewatch.bronze.slack_audit"
+      },
+      {
+        "identifier": "lakewatch.bronze.slack_messages"
+      },
+      {
+        "identifier": "lakewatch.gold.account_change"
+      },
+      {
+        "identifier": "lakewatch.gold.api_activity"
+      },
+      {
+        "identifier": "lakewatch.gold.authentication"
+      },
+      {
+        "identifier": "lakewatch.gold.data_security_finding"
+      },
+      {
+        "identifier": "lakewatch.gold.datastore_activity"
+      },
+      {
+        "identifier": "lakewatch.gold.dns_activity"
+      },
+      {
+        "identifier": "lakewatch.gold.entity_management"
+      },
+      {
+        "identifier": "lakewatch.gold.file_activity"
+      },
+      {
+        "identifier": "lakewatch.gold.group_management"
+      },
+      {
+        "identifier": "lakewatch.gold.http_activity"
+      },
+      {
+        "identifier": "lakewatch.gold.network_activity"
+      },
+      {
+        "identifier": "lakewatch.gold.process_activity"
+      },
+      {
+        "identifier": "lakewatch.gold.script_activity"
+      },
+      {
+        "identifier": "lakewatch.gold.sysmon_registry_activity",
+        "column_configs": [
+          {
+            "column_name": "_silver_table",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "computer_name",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "details",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "event_id",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "event_type",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "host",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "image",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "lw_id",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "message",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "process_guid",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "process_id",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "raw_data",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "rule_name",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "severity",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "severity_id",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "target_object",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "time",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "user",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "utc_time",
+            "enable_format_assistance": true
+          }
+        ]
+      }
+    ]
+  },
+  "instructions": {
+    "text_instructions": [
+      {
+        "id": "01f17e59000000000000000000000001",
+        "content": [
+          "PURPOSE\n",
+          "This space answers security-investigation questions over Lakewatch telemetry in natural language. Translate questions into Databricks SQL, run them, and present findings an analyst can act on.\n",
+          "\n",
+          "HOW TO INVESTIGATE\n",
+          "- Lead with a differential. For any observation, list the explanations that could produce it, benign ones included, before concluding. Test to rule them out instead of confirming the first guess.\n",
+          "- Establish a baseline before calling anything anomalous. What is normal for this host or account precedes what is unusual. The contrast is what makes an anomaly legible.\n",
+          "- Separate observation from inference. \"The connections are evenly spaced\" is an observation; \"this is a beacon\" is an inference. Keep them apart and flag low-confidence inferences as low confidence.\n",
+          "- Name the anchor. If an alert label or the question presumes an answer, say so and also look for evidence that would prove the benign reading.\n",
+          "- Match the question to the data. Findings live in the finding tables; scope and timing in network and DNS data; process lineage in host and Sysmon data; content in message and file data. Pick the data type that answers the question.\n",
+          "- Pivot by entity. Carry the host, user, IP, account, or hash from one source into the next rather than restarting.\n",
+          "- Build a correlated timeline as the artifact. Stitch host, network, and identity events for the entities of interest, ordered by time, before the investigation feels finished.\n",
+          "- Confirm scope last. Once the story holds, ask the breadth question that separates one incident from a campaign.\n",
+          "\n",
+          "HOW TO ANSWER\n",
+          "- Prefer the gold (OCSF) tables. They are normalized, fully column-documented, and give stable entity fields across sources. Drop to bronze only for a field gold does not carry.\n",
+          "- Write Databricks SQL pipe syntax. Always bound the event-time window; never scan unbounded.\n",
+          "- Show the query you ran alongside the result.\n",
+          "- Defang indicators in prose and artifacts: IPs as 8[.]8[.]8[.]8, URLs as hxxp://.\n",
+          "- Name MITRE ATT&CK technique IDs inline when you describe attacker behavior. Cite; do not assert intent you cannot support.\n",
+          "- Lead with the finding. State assumptions. If a result looks too clean or too empty, check the window and the table before trusting it.\n",
+          "\n",
+          "GOLD FIELD PATHS (dot notation into OCSF structs)\n",
+          "- process_activity: subject process = process.name, process.cmd_line, process.pid; parent = actor.process.name, actor.process.cmd_line; user = actor.user.name; host = device.hostname.\n",
+          "- network_activity: src_endpoint.ip, dst_endpoint.ip, dst_endpoint.port; bytes = traffic.bytes_out, traffic.bytes_in.\n",
+          "- authentication: user.name, src_endpoint.ip, dst_endpoint.hostname, logon_type (string, for example RemoteInteractive), is_remote, auth_protocol.\n",
+          "- dns_activity: query.hostname. http_activity: http_request, dst_endpoint.ip. file_activity: file.name, file.path, actor.process.name. file_activity holds writes and creates, not reads.\n",
+          "\n",
+          "BRONZE FIELD PATHS (payload is the data VARIANT; _meta is a struct; top-level time is event time)\n",
+          "- microsoft_winevtlog: event id = data:Id::STRING. This is ambiguous, so for Sysmon always add data:source::STRING='Microsoft-Windows-Sysmon/Operational'. Host = data:host::STRING. Sysmon process fields (Image, ParentImage, CommandLine, User) are not separate keys; they sit inside data:Message::STRING, so extract with regexp_extract(data:Message::STRING,'ParentImage: ([^&]+)',1). Security 4663 (file reads) and 1102 (log cleared) live here, not in gold.\n",
+          "- c2intelfeeds: indicator IP = data:fields:ip::STRING, class = data:indicator_class::STRING (filter ='c2'), label = data:fields:ioc::STRING. Feeds carry multiple rows per indicator, so dedupe the TI side (GROUP BY ip) before joining or counts inflate.\n",
+          "- exchange_message_tracking: sender, recipient, subject, and event-id are in the W3C CSV blob data:_raw::STRING. gold.email_activity is empty, so use this for the email pivot.\n",
+          "- aws_cloudtrail: full CloudTrail in data (gold.api_activity is a subset only). slack_messages, slack_access_logs, slack_audit, crowdstrike_events, linux_syslog, github_audit, feedly, code_security_findings, code_security_exploits: source-shaped under data."
+        ]
+      }
+    ],
+    "example_question_sqls": [
+      {
+        "id": "01f17e57000000000000000000000001",
+        "question": [
+          "What is the normal set of processes and parent processes on a host over the last 7 days?"
+        ],
+        "sql": [
+          "FROM lakewatch.gold.process_activity\n",
+          "|> WHERE device.hostname = 'WS-EXAMPLE-01' AND time >= current_timestamp() - INTERVAL 7 DAYS\n",
+          "     AND process.name IS NOT NULL\n",
+          "|> AGGREGATE count(*) AS events GROUP BY actor.process.name AS parent_process, process.name AS process\n",
+          "|> ORDER BY events DESC\n",
+          "|> LIMIT 50\n"
+        ]
+      },
+      {
+        "id": "01f17e57000000000000000000000002",
+        "question": [
+          "Which processes ran on a host today that were never seen in the prior 30 days?"
+        ],
+        "sql": [
+          "FROM lakewatch.gold.process_activity\n",
+          "|> WHERE device.hostname = 'WS-EXAMPLE-01' AND time >= current_timestamp() - INTERVAL 30 DAYS\n",
+          "     AND process.name IS NOT NULL\n",
+          "|> AGGREGATE count_if(time >= current_timestamp() - INTERVAL 1 DAY) AS today,\n",
+          "              count_if(time <  current_timestamp() - INTERVAL 1 DAY) AS prior_30d\n",
+          "   GROUP BY process.name AS process, process.cmd_line AS cmd_line\n",
+          "|> WHERE today > 0 AND prior_30d = 0\n",
+          "|> ORDER BY today DESC\n"
+        ]
+      },
+      {
+        "id": "01f17e57000000000000000000000003",
+        "question": [
+          "What external destinations did a host connect to, and how much data left, in a time window?"
+        ],
+        "sql": [
+          "FROM lakewatch.gold.network_activity\n",
+          "|> WHERE src_endpoint.ip = '198.51.100.23'\n",
+          "     AND time BETWEEN TIMESTAMP'2026-01-01 14:00:00' AND TIMESTAMP'2026-01-01 15:00:00'\n",
+          "|> AGGREGATE count(*) AS conns, sum(traffic.bytes_out) AS bytes_out\n",
+          "   GROUP BY dst_endpoint.ip AS dst_ip, dst_endpoint.port AS dst_port\n",
+          "|> ORDER BY bytes_out DESC\n"
+        ]
+      },
+      {
+        "id": "01f17e57000000000000000000000004",
+        "question": [
+          "Is a destination IP a known threat indicator, and what does the feed say?"
+        ],
+        "sql": [
+          "FROM lakewatch.bronze.c2intelfeeds\n",
+          "|> WHERE data:fields:ip::STRING = '203.0.113.10' AND data:indicator_class::STRING = 'c2'\n",
+          "|> AGGREGATE max(data:fields:ioc::STRING) AS feed_label, count(*) AS feed_rows\n",
+          "   GROUP BY data:fields:ip::STRING AS indicator_ip\n"
+        ]
+      },
+      {
+        "id": "01f17e57000000000000000000000005",
+        "question": [
+          "Trace the parent process of PowerShell launched on a host."
+        ],
+        "sql": [
+          "FROM lakewatch.bronze.microsoft_winevtlog\n",
+          "|> WHERE data:source::STRING = 'Microsoft-Windows-Sysmon/Operational' AND data:Id::STRING = '1'\n",
+          "     AND data:host::STRING = 'WS-EXAMPLE-01' AND data:Message::STRING ILIKE '%Image: %powershell.exe%'\n",
+          "|> SELECT time,\n",
+          "     regexp_extract(data:Message::STRING,'ParentImage: ([^&]+)',1) AS parent_image,\n",
+          "     regexp_extract(data:Message::STRING,'Image: ([^&]+)',1) AS image,\n",
+          "     regexp_extract(data:Message::STRING,'User: ([^&]+)',1) AS user\n",
+          "|> ORDER BY time\n"
+        ]
+      },
+      {
+        "id": "01f17e57000000000000000000000006",
+        "question": [
+          "Show authentication for an account: source host, logon type, protocol, and whether it was remote."
+        ],
+        "sql": [
+          "FROM lakewatch.gold.authentication\n",
+          "|> WHERE user.name = 'svc-example' AND time >= current_timestamp() - INTERVAL 7 DAYS\n",
+          "|> AGGREGATE count(*) AS logons\n",
+          "   GROUP BY src_endpoint.ip AS src_ip, dst_endpoint.hostname AS dst_host, logon_type, auth_protocol, is_remote\n",
+          "|> ORDER BY logons DESC\n"
+        ]
+      },
+      {
+        "id": "01f17e57000000000000000000000007",
+        "question": [
+          "Build a time-ordered timeline of process, network, and authentication events for a host in a window."
+        ],
+        "sql": [
+          "FROM lakewatch.gold.process_activity\n",
+          "|> WHERE device.hostname = 'WS-EXAMPLE-01' AND time BETWEEN TIMESTAMP'2026-01-01 14:00:00' AND TIMESTAMP'2026-01-01 16:00:00' AND process.name IS NOT NULL\n",
+          "|> SELECT time, 'process' AS source, concat(coalesce(actor.process.name,'?'),' -> ',process.name) AS detail\n",
+          "|> UNION ALL (\n",
+          "     FROM lakewatch.gold.network_activity\n",
+          "     |> WHERE src_endpoint.ip = '198.51.100.23' AND time BETWEEN TIMESTAMP'2026-01-01 14:00:00' AND TIMESTAMP'2026-01-01 16:00:00'\n",
+          "     |> SELECT time, 'network' AS source, concat('-> ',dst_endpoint.ip,':',cast(dst_endpoint.port AS string),' bytes_out=',cast(traffic.bytes_out AS string)) AS detail )\n",
+          "|> UNION ALL (\n",
+          "     FROM lakewatch.gold.authentication\n",
+          "     |> WHERE src_endpoint.ip = '198.51.100.23' AND time BETWEEN TIMESTAMP'2026-01-01 14:00:00' AND TIMESTAMP'2026-01-01 16:00:00'\n",
+          "     |> SELECT time, 'auth' AS source, concat(coalesce(user.name,'?'),' logon_type=',coalesce(logon_type,'?'),' is_remote=',cast(is_remote AS string)) AS detail )\n",
+          "|> ORDER BY time\n"
+        ]
+      },
+      {
+        "id": "01f17e57000000000000000000000008",
+        "question": [
+          "Which other internal hosts connected to a destination IP in the last 24 hours?"
+        ],
+        "sql": [
+          "FROM lakewatch.gold.network_activity\n",
+          "|> WHERE dst_endpoint.ip = '203.0.113.10' AND time >= current_timestamp() - INTERVAL 24 HOURS\n",
+          "|> AGGREGATE count(*) AS conns, sum(traffic.bytes_out) AS bytes_out, min(time) AS first_seen, max(time) AS last_seen\n",
+          "   GROUP BY src_endpoint.ip AS src_ip\n",
+          "|> ORDER BY conns DESC\n"
+        ]
+      }
+    ]
+  }
+}
