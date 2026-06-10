@@ -31,12 +31,16 @@ when gold does not carry the field you need.
 Gold tables expose OCSF objects as structs. Reach nested fields with dot
 notation. Common entity fields, by OCSF object:
 
-- Process: `process.cmd_line`, `process.name`, `process.pid`,
-  `process.parent_process.name`
+- Process (the subject process): `process.cmd_line`, `process.name`,
+  `process.pid`. The parent process is `actor.process.name` and
+  `actor.process.cmd_line`, not `process.parent_process` (that field is an
+  untyped VARIANT in the gold schema).
 - Device or host: `device.hostname`, `device.ip`, `device.os.name`
 - Source and destination endpoints: `src_endpoint.ip`, `src_endpoint.port`,
   `dst_endpoint.ip`, `dst_endpoint.port`
-- Actor or identity: `actor.user.name`, `actor.user.uid`
+- Network bytes: `traffic.bytes_out`, `traffic.bytes_in`
+- Actor or identity: `actor.user.name`, `actor.user.uid`, and the initiating
+  process `actor.process.name`
 - File: `file.name`, `file.path`, `file.hashes`
 
 Confirm the exact object and field for a given event class against the OCSF
@@ -49,10 +53,10 @@ Write queries in Databricks SQL pipe syntax. It reads top to bottom in the order
 the data flows, which matches how an investigation reasons.
 
 ```sql
-FROM lakewatch.gold.<event_table>
+FROM lakewatch.gold.process_activity
 |> WHERE device.hostname = 'WS-ENG-07'
-|> WHERE event_time >= current_timestamp() - INTERVAL 7 DAYS
-|> AGGREGATE count(*) AS events GROUP BY process.name, process.parent_process.name
+|> WHERE time >= current_timestamp() - INTERVAL 7 DAYS
+|> AGGREGATE count(*) AS events GROUP BY actor.process.name AS parent_process, process.name AS process
 |> ORDER BY events DESC
 |> LIMIT 50
 ```
@@ -61,8 +65,8 @@ FROM lakewatch.gold.<event_table>
 
 Every query bounds its time range. An unbounded scan over security telemetry is
 slow and expensive, and it rarely answers an investigative question better than a
-bounded one. Filter on the event-time column for the window the investigation
-cares about, and order by time when you present a sequence.
+bounded one. Filter on the top-level `time` column for the window the
+investigation cares about, and order by `time` when you present a sequence.
 
 ## Keep development queries small
 
