@@ -1,15 +1,20 @@
 # Genie Space example queries
 
-Readable mirror of the 8 `instructions.example_question_sqls` in `lakewatch-research-agent.serialized.json`. Generated from the JSON; the JSON is the deploy source. Entities are generic placeholders (RFC 5737 documentation ranges), not lab-specific.
+Readable mirror of the 10 `instructions.example_question_sqls` in `lakewatch-research-agent.serialized.json`. Generated from the JSON; the JSON is the deploy source. Entities are generic placeholders (RFC 5737 documentation ranges), not lab-specific.
 
 ## 1. What is the normal set of processes and parent processes on a host over the last 7 days?
 
 ```sql
 FROM lakewatch.gold.process_activity
+
 |> WHERE device.hostname = 'WS-EXAMPLE-01' AND time >= current_timestamp() - INTERVAL 7 DAYS
+
      AND process.name IS NOT NULL
+
 |> AGGREGATE count(*) AS events GROUP BY actor.process.name AS parent_process, process.name AS process
+
 |> ORDER BY events DESC
+
 |> LIMIT 50
 ```
 
@@ -17,12 +22,19 @@ FROM lakewatch.gold.process_activity
 
 ```sql
 FROM lakewatch.gold.process_activity
+
 |> WHERE device.hostname = 'WS-EXAMPLE-01' AND time >= current_timestamp() - INTERVAL 30 DAYS
+
      AND process.name IS NOT NULL
+
 |> AGGREGATE count_if(time >= current_timestamp() - INTERVAL 1 DAY) AS today,
+
               count_if(time <  current_timestamp() - INTERVAL 1 DAY) AS prior_30d
+
    GROUP BY process.name AS process, process.cmd_line AS cmd_line
+
 |> WHERE today > 0 AND prior_30d = 0
+
 |> ORDER BY today DESC
 ```
 
@@ -30,10 +42,15 @@ FROM lakewatch.gold.process_activity
 
 ```sql
 FROM lakewatch.gold.network_activity
+
 |> WHERE src_endpoint.ip = '198.51.100.23'
+
      AND time BETWEEN TIMESTAMP'2026-01-01 14:00:00' AND TIMESTAMP'2026-01-01 15:00:00'
+
 |> AGGREGATE count(*) AS conns, sum(traffic.bytes_out) AS bytes_out
+
    GROUP BY dst_endpoint.ip AS dst_ip, dst_endpoint.port AS dst_port
+
 |> ORDER BY bytes_out DESC
 ```
 
@@ -41,8 +58,11 @@ FROM lakewatch.gold.network_activity
 
 ```sql
 FROM lakewatch.bronze.c2intelfeeds
+
 |> WHERE data:fields:ip::STRING = '203.0.113.10' AND data:indicator_class::STRING = 'c2'
+
 |> AGGREGATE max(data:fields:ioc::STRING) AS feed_label, count(*) AS feed_rows
+
    GROUP BY data:fields:ip::STRING AS indicator_ip
 ```
 
@@ -50,12 +70,19 @@ FROM lakewatch.bronze.c2intelfeeds
 
 ```sql
 FROM lakewatch.bronze.microsoft_winevtlog
+
 |> WHERE data:source::STRING = 'Microsoft-Windows-Sysmon/Operational' AND data:Id::STRING = '1'
+
      AND data:host::STRING = 'WS-EXAMPLE-01' AND data:Message::STRING ILIKE '%Image: %powershell.exe%'
+
 |> SELECT time,
+
      regexp_extract(data:Message::STRING,'ParentImage: ([^&]+)',1) AS parent_image,
+
      regexp_extract(data:Message::STRING,'Image: ([^&]+)',1) AS image,
+
      regexp_extract(data:Message::STRING,'User: ([^&]+)',1) AS user
+
 |> ORDER BY time
 ```
 
@@ -63,9 +90,13 @@ FROM lakewatch.bronze.microsoft_winevtlog
 
 ```sql
 FROM lakewatch.gold.authentication
+
 |> WHERE user.name = 'svc-example' AND time >= current_timestamp() - INTERVAL 7 DAYS
+
 |> AGGREGATE count(*) AS logons
+
    GROUP BY src_endpoint.ip AS src_ip, dst_endpoint.hostname AS dst_host, logon_type, auth_protocol, is_remote
+
 |> ORDER BY logons DESC
 ```
 
@@ -73,16 +104,27 @@ FROM lakewatch.gold.authentication
 
 ```sql
 FROM lakewatch.gold.process_activity
+
 |> WHERE device.hostname = 'WS-EXAMPLE-01' AND time BETWEEN TIMESTAMP'2026-01-01 14:00:00' AND TIMESTAMP'2026-01-01 16:00:00' AND process.name IS NOT NULL
+
 |> SELECT time, 'process' AS source, concat(coalesce(actor.process.name,'?'),' -> ',process.name) AS detail
+
 |> UNION ALL (
+
      FROM lakewatch.gold.network_activity
+
      |> WHERE src_endpoint.ip = '198.51.100.23' AND time BETWEEN TIMESTAMP'2026-01-01 14:00:00' AND TIMESTAMP'2026-01-01 16:00:00'
+
      |> SELECT time, 'network' AS source, concat('-> ',dst_endpoint.ip,':',cast(dst_endpoint.port AS string),' bytes_out=',cast(traffic.bytes_out AS string)) AS detail )
+
 |> UNION ALL (
+
      FROM lakewatch.gold.authentication
+
      |> WHERE src_endpoint.ip = '198.51.100.23' AND time BETWEEN TIMESTAMP'2026-01-01 14:00:00' AND TIMESTAMP'2026-01-01 16:00:00'
+
      |> SELECT time, 'auth' AS source, concat(coalesce(user.name,'?'),' logon_type=',coalesce(logon_type,'?'),' is_remote=',cast(is_remote AS string)) AS detail )
+
 |> ORDER BY time
 ```
 
@@ -90,9 +132,50 @@ FROM lakewatch.gold.process_activity
 
 ```sql
 FROM lakewatch.gold.network_activity
+
 |> WHERE dst_endpoint.ip = '203.0.113.10' AND time >= current_timestamp() - INTERVAL 24 HOURS
+
 |> AGGREGATE count(*) AS conns, sum(traffic.bytes_out) AS bytes_out, min(time) AS first_seen, max(time) AS last_seen
+
    GROUP BY src_endpoint.ip AS src_ip
+
 |> ORDER BY conns DESC
 ```
 
+## 9. Which internal hosts connected to a known C2 indicator from the threat intel feed, with connection counts?
+
+```sql
+FROM lakewatch.gold.network_activity AS n
+
+|> WHERE n.time >= current_timestamp() - INTERVAL 30 DAYS AND n.dst_endpoint.ip IS NOT NULL
+
+|> JOIN (
+
+     FROM lakewatch.bronze.c2intelfeeds
+
+     |> WHERE data:indicator_class::STRING = 'c2'
+
+     |> AGGREGATE max(data:fields:ioc::STRING) AS indicator_label GROUP BY data:fields:ip::STRING AS ip
+
+   ) AS ti ON n.dst_endpoint.ip = ti.ip
+
+|> AGGREGATE count(*) AS connection_count, sum(n.traffic.bytes_out) AS bytes_out, min(n.time) AS first_seen, max(n.time) AS last_seen
+
+   GROUP BY n.src_endpoint.ip AS internal_host, n.dst_endpoint.ip AS c2_ip, ti.indicator_label
+
+|> ORDER BY connection_count DESC
+```
+
+## 10. How many open notables are there by severity and rule, and how many distinct cases?
+
+```sql
+FROM lakewatch.internal.notables
+
+|> WHERE state = 'Open'
+
+|> AGGREGATE count(*) AS notables, count(DISTINCT case_id) AS cases
+
+   GROUP BY severity, rule_display_name
+
+|> ORDER BY notables DESC
+```
