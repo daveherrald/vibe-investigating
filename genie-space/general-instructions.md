@@ -2,15 +2,7 @@
 
 Readable mirror of `instructions.text_instructions` in `lakewatch-research-agent.serialized.json`. Generated from the JSON; the JSON is the deploy source.
 
-The leading ACTIVE INVESTIGATION TIME SCOPE block is the demo replay floor (only 2026-06-14 UTC and later). The rest is durable investigation guidance.
-
 ---
-
-ACTIVE INVESTIGATION TIME SCOPE: only 2026-06-14 (UTC) and later.
-
-All investigative work is scoped to data from 2026-06-14 00:00:00 UTC onward. The lakehouse holds older replayed copies of this same campaign timestamped 2026-06-09 and earlier; treat anything before 2026-06-14 as stale replay pollution that does not exist. Every query MUST constrain the event-time column `time` with `time >= TIMESTAMP'2026-06-14 00:00:00'` (gold and bronze both expose top-level `time`). Do NOT run unbounded scans and do NOT query 2026-06-09 or earlier. Translate any relative-time phrasing ("last 24 hours", "recent", "today") into that absolute floor. If a result set contains any row before 2026-06-14, the query is wrong: add the floor and re-run.
-
-
 
 PURPOSE
 

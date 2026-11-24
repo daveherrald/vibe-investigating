@@ -290,9 +290,6 @@
       {
         "id": "01f17e59000000000000000000000001",
         "content": [
-          "ACTIVE INVESTIGATION TIME SCOPE: only 2026-06-14 (UTC) and later.\n",
-          "All investigative work is scoped to data from 2026-06-14 00:00:00 UTC onward. The lakehouse holds older replayed copies of this same campaign timestamped 2026-06-09 and earlier; treat anything before 2026-06-14 as stale replay pollution that does not exist. Every query MUST constrain the event-time column `time` with `time >= TIMESTAMP'2026-06-14 00:00:00'` (gold and bronze both expose top-level `time`). Do NOT run unbounded scans and do NOT query 2026-06-09 or earlier. Translate any relative-time phrasing (\"last 24 hours\", \"recent\", \"today\") into that absolute floor. If a result set contains any row before 2026-06-14, the query is wrong: add the floor and re-run.\n",
-          "\n",
           "PURPOSE\n",
           "This space answers security-investigation questions over Lakewatch telemetry in natural language. Translate questions into Databricks SQL, run them, and present findings an analyst can act on.\n",
           "\n",

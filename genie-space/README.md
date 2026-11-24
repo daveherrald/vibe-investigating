@@ -21,8 +21,8 @@ Unity Catalog tables; this directory holds its deployable config.
   (`microsoft_winevtlog`, the Zeek conn/dns/http/email logs, proxy, threat intel,
   email tracking, Slack, and more), and `lakewatch.internal.notables` as the
   case/notable proxy. The space is at the 30-table limit.
-- General instructions encoding the investigation method, the gold and bronze
-  field paths, and the active demo time-scope floor (only 2026-06-14 UTC and later).
+- General instructions encoding the investigation method and the gold and bronze
+  field paths.
 - Ten example queries, one per investigation move, using generic placeholder
   entities (RFC 5737 documentation ranges), not lab-specific values.
 
